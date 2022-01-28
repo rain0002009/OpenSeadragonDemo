@@ -1,0 +1,2 @@
+# OpenSeadragonDemo
+使用openseadragon和p5js 制作金字塔标注
