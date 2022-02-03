@@ -40,9 +40,6 @@ const ControlPanel: FC<P5Overlay> = ({ viewer, sk, drawMethod, markerStore }) =>
         sk.loop()
 
         sk.mousePressed = () => {
-            // setTimeout(() => {
-            //     viewer.setMouseNavEnabled(true)
-            // }, 0)
             startPoint = new Point(sk.mouseX, sk.mouseY)
             if (markOptions.current?.type === 'text') {
                 const inputWrap = sk.select('#inputWrap')

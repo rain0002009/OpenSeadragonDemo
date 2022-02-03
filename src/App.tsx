@@ -2,7 +2,6 @@ import OpenSeaDragon from 'openseadragon'
 import './App.css'
 import { useEffect, useRef } from 'react'
 import P5Overlay from './lib/P5Overlay'
-import { virtualModulePrefix } from 'vite/dist/node/utils'
 
 function App () {
     const domEl = useRef<HTMLDivElement>(null)
@@ -14,8 +13,8 @@ function App () {
             Overlap: '2',
             TileSize: '256',
             Size: {
-                Width: '9221',
-                Height: '7026'
+                Height: "9221",
+                Width: "7026"
             }
         }
     })
@@ -46,7 +45,7 @@ function App () {
         }
     }, [domEl])
     return <div>
-        <div className="h-100vh z-1" ref={ domEl } />
+        <div className="h-100vh w-full z-1" ref={ domEl } />
     </div>
 }
 
