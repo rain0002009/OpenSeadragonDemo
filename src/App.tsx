@@ -1,29 +1,27 @@
-import OpenSeaDragon from 'openseadragon'
+import OpenSeaDragon, { TileSource } from 'openseadragon'
 import './App.css'
 import { useEffect, useRef } from 'react'
 import P5Overlay from './lib/P5Overlay'
 
 function App () {
     const domEl = useRef<HTMLDivElement>(null)
-    const tileSource = useRef<any>({
-        Image: {
-            xmlns: 'http://schemas.microsoft.com/deepzoom/2009',
-            Url: 'http://openseadragon.github.io/example-images/highsmith/highsmith_files/',
-            Format: 'jpg',
-            Overlap: '2',
-            TileSize: '256',
-            Size: {
-                Height: "9221",
-                Width: "7026"
-            }
+    const tileSource = useRef<any>(new TileSource({
+        width: 31883,
+        height: 32175,
+        minLevel: 5,
+        maxLevel: 16,
+        tileSize: 512,
+        tileOverlap: 0,
+        getTileUrl (level, x, y) {
+            return `http://api.fxskcloud.com/Section/GetTileImage?sectionId=290&level=${ level }&x=${ x }&y=${ y }`
         }
-    })
+    }))
     useEffect(() => {
+        let viewer: OpenSeadragon.Viewer
         if (domEl.current) {
-            const viewer = OpenSeaDragon({
+            viewer = OpenSeaDragon({
                 element: domEl.current,
                 collectionMode: true,
-                autoResize: false,
                 collectionRows: 2,
                 // 不显示基础导航按钮
                 showNavigationControl: false,
@@ -42,6 +40,9 @@ function App () {
                 }
             })
             new P5Overlay(viewer, {})
+        }
+        return () => {
+            viewer.destroy()
         }
     }, [domEl])
     return <div>

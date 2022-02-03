@@ -18,7 +18,6 @@ export interface MarkerItem {
 }
 
 interface Options {
-    init?: (p: P5) => void
     markerStore?: MarkerItem[]
 }
 
@@ -35,17 +34,10 @@ export default class P5Overlay {
         this.wrapDiv = document.createElement('div')
         this.wrapDiv.classList.add('p5-wrap')
         this.viewer.canvas.append(this.wrapDiv)
-        this.viewer.addHandler('open', () => {
-            this.sk?.redraw()
-        })
-        this.viewer.addHandler('update-viewport', () => {
-            this.sk?.redraw()
-        })
         this.drawMethod = {
             draw (image: OpenSeadragon.TiledImage) {}
         }
-        new P5((sk) => {
-            this.sk = sk
+        this.sk = new P5((sk) => {
             sk.setup = () => {
                 sk.createCanvas(this.viewer.container.clientWidth, this.viewer.container.clientHeight)
                 sk.noLoop()
@@ -67,8 +59,18 @@ export default class P5Overlay {
                     }
                 }
             }
-            options.init?.(sk)
         }, this.wrapDiv)
+        this.viewer.addHandler('open', this.redraw.bind(this))
+        this.viewer.addHandler('update-viewport', this.redraw.bind(this))
+        this.viewer.addHandler('resize', this.resizeCanvas.bind(this))
+    }
+
+    private resizeCanvas () {
+        this.sk?.resizeCanvas(this.viewer.container.clientWidth, this.viewer.container.clientHeight, false)
+    }
+
+    public redraw () {
+        this.sk?.redraw()
     }
 
     private addControl () {
@@ -76,6 +78,11 @@ export default class P5Overlay {
         wrap.classList.add('flex', 'w-full', 'relative')
         this.viewer.container.append(wrap)
         render(createElement(ControlPanel, this, null), wrap)
+    }
+
+    public setMarkStore (markStore: MarkerItem[]) {
+        this.markerStore = markStore
+        this.redraw()
     }
 
     private drawMarkStore () {
