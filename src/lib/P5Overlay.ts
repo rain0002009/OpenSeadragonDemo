@@ -5,16 +5,26 @@ import { render } from 'react-dom'
 import ControlPanel from './ControlPanel'
 import { createElement } from 'react'
 import { Point } from 'openseadragon'
+import _ from 'lodash'
 
 type ShapeStyle = 'rect' | 'circle' | 'line' | 'free' | 'text'
 
 export interface MarkerItem {
-    type: ShapeStyle | null | string
+    type?: ShapeStyle | null | string
     strokeWeight?: number
     color?: string
     opacity?: number
     path?: [number, number][]
     text?: string
+}
+
+interface DrawOptions extends MarkerItem {
+    startPoint?: Point | null
+    endPoint?: Point | null
+    isInputOk?: boolean
+    startPointTransformed?: Point | null
+    freePath?: [number, number][]
+    enable?: boolean
 }
 
 interface Options {
@@ -25,7 +35,11 @@ export default class P5Overlay {
     public viewer: OpenSeaDragon.Viewer
     private readonly wrapDiv: HTMLDivElement
     public sk!: P5
-    public drawMethod: { draw (image: OpenSeadragon.TiledImage): void }
+    public drawMethod: {
+        startDraw: (openTextModal?: () => void) => void
+        draw (sk: P5, drawOptions: DrawOptions, mode: 1 | 2, image?: OpenSeadragon.TiledImage): void
+        drawOptions: DrawOptions
+    }
     public markerStore: MarkerItem[]
 
     constructor (viewer: OpenSeaDragon.Viewer, options: Options) {
@@ -35,7 +49,114 @@ export default class P5Overlay {
         this.wrapDiv.classList.add('p5-wrap')
         this.viewer.canvas.append(this.wrapDiv)
         this.drawMethod = {
-            draw (image: OpenSeadragon.TiledImage) {}
+            drawOptions: {},
+            startDraw: (openTextModal) => {
+                this.drawMethod.drawOptions.enable = true
+                viewer.setMouseNavEnabled(false)
+                this.drawMethod.drawOptions.startPoint = null
+                this.drawMethod.drawOptions.endPoint = null
+                this.drawMethod.drawOptions.startPointTransformed = null
+                this.drawMethod.drawOptions.freePath = []
+                this.sk.loop()
+
+                this.sk.mousePressed = () => {
+                    this.drawMethod.drawOptions!.startPoint = new Point(this.sk.mouseX, this.sk.mouseY)
+                    if (this.drawMethod.drawOptions?.type === 'text') {
+                        const inputWrap = this.sk.select('#inputWrap')
+                        if (inputWrap) {
+                            inputWrap?.position(this.drawMethod.drawOptions.startPoint.x, this.drawMethod.drawOptions.startPoint.y)
+                            openTextModal?.()
+                        } else {
+                            console.error('inputWrap is null')
+                        }
+                    }
+                }
+                this.sk.mouseReleased = () => {
+                    if (this.drawMethod.drawOptions?.type === 'text') {
+                        this.sk.mousePressed = _.noop
+                        return false
+                    }
+                    this.drawMethod.drawOptions.enable = false
+                    this.sk.noLoop()
+                    viewer.setMouseNavEnabled(true)
+                    this.sk.mousePressed = _.noop
+                    const markItem = {
+                        ...this.drawMethod.drawOptions!
+                    }
+                    switch (this.drawMethod.drawOptions?.type) {
+                        case 'circle':
+                        case 'rect':
+                        case 'line':
+                            markItem.path = [[this.drawMethod.drawOptions.startPointTransformed!.x, this.drawMethod.drawOptions!.startPointTransformed!.y], [this.drawMethod.drawOptions!.endPoint!.x, this.drawMethod.drawOptions!.endPoint!.y]]
+                            break
+                        case 'free':
+                            markItem.path = this.drawMethod.drawOptions!.freePath
+                            break
+                    }
+                    this.markerStore.push(markItem)
+                    this.drawMethod.drawOptions = {}
+                    this.sk.mouseReleased = _.noop
+                }
+            },
+            draw: (sk, drawOptions, mode, image) => {
+                const canDraw = mode === 1 ? drawOptions.enable && sk.mouseIsPressed && drawOptions && drawOptions.startPoint && sk.mouseButton === sk.LEFT : true
+                if (canDraw) {
+                    sk.push()
+                    const color = sk.color(drawOptions!.color!)
+                    color.setAlpha(sk.map(drawOptions!.opacity!, 0, 1, 0, 255))
+                    drawOptions.startPointTransformed = image?.viewerElementToImageCoordinates(drawOptions.startPoint!)
+                    drawOptions.endPoint = image?.viewerElementToImageCoordinates(new Point(sk.mouseX, sk.mouseY))
+                    let startPoint: Point
+                    let endPoint: Point
+                    if (mode === 1) {
+                        startPoint = drawOptions.startPointTransformed!
+                        endPoint = drawOptions.endPoint!
+                    } else {
+                        startPoint = new Point(...drawOptions.path![0])
+                        endPoint = new Point(...(drawOptions.path?.[1] || [0, 0]))
+                    }
+                    if (['circle', 'rect', 'line', 'free'].includes(drawOptions!.type!)) {
+                        sk.noFill()
+                        sk.strokeWeight(drawOptions?.strokeWeight || 1)
+                        sk.stroke(color)
+                    }
+                    switch (drawOptions?.type) {
+                        case 'circle':
+                            sk.circle(startPoint.x, startPoint.y, startPoint.distanceTo(endPoint) * 2)
+                            break
+                        case 'rect':
+                            sk.quad(startPoint.x, startPoint.y, endPoint.x, startPoint.y, endPoint.x, endPoint.y, startPoint.x, endPoint.y)
+                            break
+                        case 'line':
+                            sk.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
+                            break
+                        case 'free':
+                            if (mode == 1) {
+                                if (drawOptions.freePath?.length === 0) {
+                                    drawOptions.freePath.push([startPoint.x, startPoint.y])
+                                }
+                                if ((new Point(..._.last(drawOptions.freePath)!).distanceTo(endPoint)) > 20) {
+                                    drawOptions.freePath?.push([endPoint.x, endPoint.y])
+                                }
+                            }
+                            drawOptions[mode === 1 ? 'freePath' : 'path']?.forEach((point, pointIndex) => {
+                                const nextPoint = drawOptions.freePath?.[pointIndex + 1]
+                                if (nextPoint) {
+                                    sk.line(...point, ...nextPoint)
+                                }
+                            })
+                            break
+                        case 'text':
+                            if (mode === 1 ? drawOptions.isInputOk : true) {
+                                sk.textSize(drawOptions!.strokeWeight! * 10)
+                                sk.fill(color)
+                                sk.text(drawOptions.text!, startPoint.x, startPoint.y)
+                            }
+                            break
+                    }
+                    sk.pop()
+                }
+            }
         }
         this.sk = new P5((sk) => {
             sk.setup = () => {
@@ -55,7 +176,7 @@ export default class P5Overlay {
                         sk.translate(p.x, p.y)
                         sk.scale(zoom, zoom)
                         this.drawMarkStore()
-                        this.drawMethod.draw(image)
+                        this.drawMethod.draw(sk, this.drawMethod.drawOptions, 1, image)
                     }
                 }
             }
@@ -89,43 +210,7 @@ export default class P5Overlay {
 
     private drawMarkStore () {
         this.markerStore.forEach(item => {
-            this.sk.push()
-            const start = new Point(...item.path![0])
-            let end = new Point(0, 0)
-            const color = this.sk.color(item.color!)
-            color.setAlpha(this.sk.map(item.opacity!, 0, 1, 0, 255))
-            if (['rect', 'circle', 'line', 'free'].includes(item.type!)) {
-                this.sk.noFill()
-                this.sk.stroke(color)
-                this.sk.strokeWeight(item.strokeWeight!)
-                end = new Point(...item.path![1])
-            }
-
-            switch (item.type) {
-                case 'circle':
-                    this.sk.circle(start.x, start.y, start.distanceTo(end) * 2)
-                    break
-                case 'rect':
-                    this.sk.quad(start.x, start.y, end.x, start.y, end.x, end.y, start.x, end.y)
-                    break
-                case 'line':
-                    this.sk.line(start.x, start.y, end.x, end.y)
-                    break
-                case 'free':
-                    item.path?.forEach((point, pointIndex) => {
-                        const nextPoint = item.path![pointIndex + 1]
-                        if (nextPoint) {
-                            this.sk.line(...point, ...nextPoint)
-                        }
-                    })
-                    break
-                case 'text':
-                    this.sk.textSize(item.strokeWeight! * 10)
-                    this.sk.fill(color)
-                    this.sk.text(item.text!, start.x, start.y)
-                    break
-            }
-            this.sk.pop()
+            this.drawMethod.draw(this.sk, item, 2)
         })
     }
 }

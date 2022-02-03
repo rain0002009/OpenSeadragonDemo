@@ -6,14 +6,14 @@ import P5Overlay from './lib/P5Overlay'
 function App () {
     const domEl = useRef<HTMLDivElement>(null)
     const tileSource = useRef<any>(new TileSource({
-        width: 31883,
-        height: 32175,
-        minLevel: 5,
-        maxLevel: 16,
-        tileSize: 512,
+        width: 18034,
+        height: 12435,
+        minLevel: 8,
+        maxLevel: 15,
+        tileSize: 256,
         tileOverlap: 0,
         getTileUrl (level, x, y) {
-            return `http://api.fxskcloud.com/Section/GetTileImage?sectionId=290&level=${ level }&x=${ x }&y=${ y }`
+            return `http://api.fxskcloud.com/Section/GetTileImage?sectionId=288&level=${ level }&x=${ x }&y=${ y }`
         }
     }))
     useEffect(() => {
