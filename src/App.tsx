@@ -21,8 +21,6 @@ function App () {
         if (domEl.current) {
             viewer = OpenSeaDragon({
                 element: domEl.current,
-                collectionMode: true,
-                collectionRows: 2,
                 // 不显示基础导航按钮
                 showNavigationControl: false,
                 // 显示小地图
@@ -44,7 +42,7 @@ function App () {
         return () => {
             viewer.destroy()
         }
-    }, [domEl])
+    }, [domEl.current])
     return <div>
         <div className="h-100vh w-full z-1" ref={ domEl } />
     </div>

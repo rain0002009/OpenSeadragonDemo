@@ -77,7 +77,9 @@ export default class P5Overlay {
         const wrap = document.createElement('div')
         wrap.classList.add('flex', 'w-full', 'relative')
         this.viewer.container.append(wrap)
-        render(createElement(ControlPanel, this, null), wrap)
+        setTimeout(() => {
+            render(createElement(ControlPanel, this, null), wrap)
+        }, 0)
     }
 
     public setMarkStore (markStore: MarkerItem[]) {
