@@ -475,10 +475,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/openseadragon@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@types/openseadragon@npm:3.0.0"
-  checksum: 3dd80ae5ca556b3b90fd6747264b284aa6267a25cf01245de02a1590c1872efb747f6d2c627299fad4e1920752a2c6a96ef5d6b0529715a81be7845beaf306ca
+"@types/openseadragon@npm:^2.4.2":
+  version: 2.4.8
+  resolution: "@types/openseadragon@npm:2.4.8"
+  checksum: 30ad3023ea7db104f9d8ff1436659739cbc6dedc5a193a4f70fac0fc74e474a2fb05baf8221a4a9be1c52d8e8b8707132a7e483de8d2535d7ae42da75891fc1d
   languageName: node
   linkType: hard
 
@@ -2122,10 +2122,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openseadragon@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "openseadragon@npm:3.0.0"
-  checksum: bba0c6b50059d5756517553388b1132df94e2dfde80d3e2eb1a1c9dc5c3521433b69ac40c948acd7f6a809fb2823bb530df7da5740ea4af0d4b05ba980515f2a
+"openseadragon@npm:^2.4.2":
+  version: 2.4.2
+  resolution: "openseadragon@npm:2.4.2"
+  checksum: 89ff969e2d588d7d1a0e18fa1036b9540876968483a58389ba5077dfd028a791948387cdd2a69ce3972c035f618557fb65211aaef609fb92678f16f1198e7ab1
   languageName: node
   linkType: hard
 
@@ -2134,7 +2134,7 @@ __metadata:
   resolution: "openseadragon@workspace:."
   dependencies:
     "@types/lodash": ^4.14.178
-    "@types/openseadragon": ^3.0.0
+    "@types/openseadragon": ^2.4.2
     "@types/p5": ^1.3.3
     "@types/react": ^17.0.33
     "@types/react-color": ^3.0.6
@@ -2144,7 +2144,7 @@ __metadata:
     antd: ^4.18.5
     less: ^4.1.2
     lodash: ^4.17.21
-    openseadragon: ^3.0.0
+    openseadragon: ^2.4.2
     p5: ^1.4.0
     react: ^17.0.2
     react-color: ^2.19.3

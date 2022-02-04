@@ -37,7 +37,7 @@ export default class P5Overlay {
     public sk!: P5
     public drawMethod: {
         startDraw: (openTextModal?: () => void) => void
-        draw (sk: P5, drawOptions: DrawOptions, mode: 1 | 2, image?: OpenSeadragon.TiledImage): void
+        draw (sk: P5, drawOptions: DrawOptions, mode: 1 | 2, zoom: number, image?: OpenSeadragon.TiledImage): void
         drawOptions: DrawOptions
     }
     public markerStore: MarkerItem[]
@@ -98,7 +98,7 @@ export default class P5Overlay {
                     this.sk.mouseReleased = _.noop
                 }
             },
-            draw: (sk, drawOptions, mode, image) => {
+            draw: (sk, drawOptions, mode, zoom, image) => {
                 const canDraw = mode === 1 ? drawOptions.enable && sk.mouseIsPressed && drawOptions && drawOptions.startPoint && sk.mouseButton === sk.LEFT : true
                 if (canDraw) {
                     sk.push()
@@ -108,6 +108,7 @@ export default class P5Overlay {
                     drawOptions.endPoint = image?.viewerElementToImageCoordinates(new Point(sk.mouseX, sk.mouseY))
                     let startPoint: Point
                     let endPoint: Point
+                    const strokeWeight = drawOptions!.strokeWeight! * viewer.viewport.getMinZoom() / viewer.viewport.getHomeZoom()
                     if (mode === 1) {
                         startPoint = drawOptions.startPointTransformed!
                         endPoint = drawOptions.endPoint!
@@ -117,7 +118,7 @@ export default class P5Overlay {
                     }
                     if (['circle', 'rect', 'line', 'free'].includes(drawOptions!.type!)) {
                         sk.noFill()
-                        sk.strokeWeight(drawOptions?.strokeWeight || 1)
+                        sk.strokeWeight(strokeWeight * 2)
                         sk.stroke(color)
                     }
                     switch (drawOptions?.type) {
@@ -148,7 +149,7 @@ export default class P5Overlay {
                             break
                         case 'text':
                             if (mode === 1 ? drawOptions.isInputOk : true) {
-                                sk.textSize(drawOptions!.strokeWeight! * 10)
+                                sk.textSize(strokeWeight * 25)
                                 sk.fill(color)
                                 sk.text(drawOptions.text!, startPoint.x, startPoint.y)
                             }
@@ -175,8 +176,8 @@ export default class P5Overlay {
                         let p = this.viewer.viewport.pixelFromPoint(vp, true)
                         sk.translate(p.x, p.y)
                         sk.scale(zoom, zoom)
-                        this.drawMarkStore()
-                        this.drawMethod.draw(sk, this.drawMethod.drawOptions, 1, image)
+                        this.drawMarkStore(viewportZoom)
+                        this.drawMethod.draw(sk, this.drawMethod.drawOptions, 1, viewportZoom, image)
                     }
                 }
             }
@@ -208,9 +209,9 @@ export default class P5Overlay {
         this.redraw()
     }
 
-    private drawMarkStore () {
+    private drawMarkStore (zoom: number) {
         this.markerStore.forEach(item => {
-            this.drawMethod.draw(this.sk, item, 2)
+            this.drawMethod.draw(this.sk, item, 2, zoom,)
         })
     }
 }
