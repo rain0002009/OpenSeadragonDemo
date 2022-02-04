@@ -7,6 +7,7 @@ import styleImport, {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: '/OpenSeadragonDemo/',
     css: {
         preprocessorOptions: {
             less: {
