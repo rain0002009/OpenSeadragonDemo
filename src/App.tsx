@@ -6,14 +6,12 @@ import P5Overlay from './lib/P5Overlay'
 function App () {
     const domEl = useRef<HTMLDivElement>(null)
     const tileSource = useRef<any>(new TileSource({
-        width: 18034,
-        height: 12435,
-        minLevel: 8,
-        maxLevel: 15,
+        width: 7026,
+        height: 9221,
         tileSize: 256,
-        tileOverlap: 0,
+        tileOverlap: 2,
         getTileUrl (level, x, y) {
-            return `http://api.fxskcloud.com/Section/GetTileImage?sectionId=288&level=${ level }&x=${ x }&y=${ y }`
+            return `//openseadragon.github.io//example-images/highsmith/highsmith_files/${level}/${x}_${y}.jpg`
         }
     }))
     useEffect(() => {

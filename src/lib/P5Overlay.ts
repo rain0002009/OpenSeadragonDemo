@@ -3,7 +3,7 @@ import type OpenSeaDragon from 'openseadragon'
 import './index.less'
 import { render } from 'react-dom'
 import ControlPanel from './ControlPanel'
-import { createElement } from 'react'
+import { createElement, ComponentType } from 'react'
 import { Point } from 'openseadragon'
 import _ from 'lodash'
 
@@ -29,6 +29,7 @@ interface DrawOptions extends MarkerItem {
 
 interface Options {
     markerStore?: MarkerItem[]
+    ControlPanel?: ComponentType<P5Overlay>
 }
 
 export default class P5Overlay {
@@ -41,8 +42,10 @@ export default class P5Overlay {
         drawOptions: DrawOptions
     }
     public markerStore: MarkerItem[]
+    private readonly ControlPanel!: ComponentType<P5Overlay>
 
     constructor (viewer: OpenSeaDragon.Viewer, options: Options) {
+        this.ControlPanel = options.ControlPanel || ControlPanel
         this.markerStore = options.markerStore || []
         this.viewer = viewer
         this.wrapDiv = document.createElement('div')
@@ -200,7 +203,7 @@ export default class P5Overlay {
         wrap.classList.add('flex', 'w-full', 'relative')
         this.viewer.container.append(wrap)
         setTimeout(() => {
-            render(createElement(ControlPanel, this, null), wrap)
+            render(createElement(this.ControlPanel, this, null), wrap)
         }, 0)
     }
 
