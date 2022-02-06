@@ -2,6 +2,7 @@ import OpenSeaDragon, { TileSource } from 'openseadragon'
 import './App.css'
 import { useEffect, useRef } from 'react'
 import P5Overlay from './lib/P5Overlay'
+import _ from 'lodash'
 
 function App () {
     const domEl = useRef<HTMLDivElement>(null)
@@ -11,7 +12,7 @@ function App () {
         tileSize: 256,
         tileOverlap: 2,
         getTileUrl (level, x, y) {
-            return `//openseadragon.github.io//example-images/highsmith/highsmith_files/${level}/${x}_${y}.jpg`
+            return `//openseadragon.github.io//example-images/highsmith/highsmith_files/${ level }/${ x }_${ y }.jpg`
         }
     }))
     useEffect(() => {
@@ -19,6 +20,7 @@ function App () {
         if (domEl.current) {
             viewer = OpenSeaDragon({
                 element: domEl.current,
+                crossOriginPolicy: 'Anonymous',
                 // 不显示基础导航按钮
                 showNavigationControl: false,
                 // 显示小地图
@@ -35,6 +37,7 @@ function App () {
                     clickToZoom: false
                 }
             })
+            _.set(window, 'viewer', viewer)
             new P5Overlay(viewer, {})
         }
         return () => {

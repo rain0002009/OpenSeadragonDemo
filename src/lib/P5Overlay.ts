@@ -2,10 +2,11 @@ import P5 from 'p5'
 import type OpenSeaDragon from 'openseadragon'
 import './index.less'
 import { render } from 'react-dom'
-import ControlPanel from './ControlPanel'
+import ControlPanel, { ControlPanelProps } from './ControlPanel'
 import { createElement, ComponentType } from 'react'
 import { Point } from 'openseadragon'
 import _ from 'lodash'
+import { Crop } from './Crop'
 
 type ShapeStyle = 'rect' | 'circle' | 'line' | 'free' | 'text'
 
@@ -29,7 +30,8 @@ interface DrawOptions extends MarkerItem {
 
 interface Options {
     markerStore?: MarkerItem[]
-    ControlPanel?: ComponentType<P5Overlay>
+    ControlPanel?: ComponentType<ControlPanelProps>
+    onCropFinish?: (data: { blob: Blob }) => void
 }
 
 export default class P5Overlay {
@@ -42,9 +44,12 @@ export default class P5Overlay {
         drawOptions: DrawOptions
     }
     public markerStore: MarkerItem[]
-    private readonly ControlPanel!: ComponentType<P5Overlay>
+    private readonly ControlPanel!: ComponentType<ControlPanelProps>
+    public crop!: Crop
+    public onCropFinish: Options['onCropFinish']
 
     constructor (viewer: OpenSeaDragon.Viewer, options: Options) {
+        this.onCropFinish = options.onCropFinish
         this.ControlPanel = options.ControlPanel || ControlPanel
         this.markerStore = options.markerStore || []
         this.viewer = viewer
@@ -54,6 +59,7 @@ export default class P5Overlay {
         this.drawMethod = {
             drawOptions: {},
             startDraw: (openTextModal) => {
+                this.crop.cancelCrop()
                 this.drawMethod.drawOptions.enable = true
                 viewer.setMouseNavEnabled(false)
                 this.drawMethod.drawOptions.startPoint = null
@@ -164,7 +170,8 @@ export default class P5Overlay {
         }
         this.sk = new P5((sk) => {
             sk.setup = () => {
-                sk.createCanvas(this.viewer.container.clientWidth, this.viewer.container.clientHeight)
+                const viewerSize = this.viewer.viewport.getContainerSize()
+                sk.createCanvas(viewerSize.x, viewerSize.y)
                 sk.noLoop()
                 this.addControl()
             }
@@ -177,21 +184,29 @@ export default class P5Overlay {
                         let zoom = image.viewportToImageZoom(viewportZoom)
                         let vp = image.imageToViewportCoordinates(0, 0, true)
                         let p = this.viewer.viewport.pixelFromPoint(vp, true)
-                        sk.translate(p.x, p.y)
-                        sk.scale(zoom, zoom)
-                        this.drawMarkStore(viewportZoom)
-                        this.drawMethod.draw(sk, this.drawMethod.drawOptions, 1, viewportZoom, image)
+                        if (!this.crop.cropInfo.enable) {
+                            sk.push()
+                            sk.translate(p.x, p.y)
+                            sk.scale(zoom, zoom)
+                            this.drawMarkStore(viewportZoom)
+                            this.drawMethod.draw(sk, this.drawMethod.drawOptions, 1, viewportZoom, image)
+                            sk.pop()
+                        }
+                        this.crop.doCrop()
                     }
                 }
             }
         }, this.wrapDiv)
+        this.crop = new Crop(this)
         this.viewer.addHandler('open', this.redraw.bind(this))
         this.viewer.addHandler('update-viewport', this.redraw.bind(this))
         this.viewer.addHandler('resize', this.resizeCanvas.bind(this))
     }
 
     private resizeCanvas () {
-        this.sk?.resizeCanvas(this.viewer.container.clientWidth, this.viewer.container.clientHeight, false)
+        const viewerSize = this.viewer.viewport.getContainerSize()
+        this.sk?.resizeCanvas(viewerSize.x, viewerSize.y, false)
+        this.crop?.resize()
     }
 
     public redraw () {
@@ -200,10 +215,9 @@ export default class P5Overlay {
 
     private addControl () {
         const wrap = document.createElement('div')
-        wrap.classList.add('flex', 'w-full', 'relative')
         this.viewer.container.append(wrap)
         setTimeout(() => {
-            render(createElement(this.ControlPanel, this, null), wrap)
+            render(createElement(this.ControlPanel, { overlay: this }, null), wrap)
         }, 0)
     }
 

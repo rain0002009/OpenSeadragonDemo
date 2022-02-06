@@ -17,7 +17,10 @@ const CONTROL_TYPES = [
     }
 ]
 
-const ControlPanel: FC<P5Overlay> = ({ viewer, sk, drawMethod, markerStore }) => {
+export interface ControlPanelProps {overlay: P5Overlay}
+
+const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
+    const { sk, viewer, drawMethod, markerStore } = overlay
     const innerData = useReactive({
         markVisibility: false,
         inputVisibility: false,
@@ -26,7 +29,7 @@ const ControlPanel: FC<P5Overlay> = ({ viewer, sk, drawMethod, markerStore }) =>
 
     if (!sk) return null
 
-    return <div className="ml-auto w-100px">
+    return <>
         <Popover
             zIndex={ 10 }
             visible={ innerData.inputVisibility }
@@ -70,58 +73,67 @@ const ControlPanel: FC<P5Overlay> = ({ viewer, sk, drawMethod, markerStore }) =>
         >
             <div id="inputWrap" />
         </Popover>
-        <Menu
-            mode="inline"
-            className="border border-color-[#dedede] shadow"
-        >
-            {
-                CONTROL_TYPES.map(({ type, label }) => {
-                    return <Item
-                        key={ type }
-                        onClick={ ({ key }) => {
-                            switch (key) {
-                                case 'fullscreen':
-                                    viewer.setFullScreen(true)
-                                    break
-                                case 'home':
-                                    viewer.viewport.goHome(true)
-                                    break
-                            }
+        <div className="absolute right-0 w-100px">
+            <Menu
+                mode="inline"
+                className="border border-color-[#dedede] shadow"
+            >
+                {
+                    CONTROL_TYPES.map(({ type, label }) => {
+                        return <Item
+                            key={ type }
+                            onClick={ ({ key }) => {
+                                switch (key) {
+                                    case 'fullscreen':
+                                        viewer.setFullScreen(true)
+                                        break
+                                    case 'home':
+                                        viewer.viewport.goHome(true)
+                                        break
+                                }
+                            } }
+                        >
+                            { label }
+                        </Item>
+                    })
+                }
+                <Popover
+                    placement="leftTop"
+                    title={ <p>标注</p> }
+                    content={
+                        <MarkPanel
+                            onChange={ (data) => {
+                                innerData.markVisibility = false
+                                drawMethod.drawOptions = data
+                                drawMethod.startDraw(() => {
+                                    innerData.inputVisibility = true
+                                })
+                            } }
+                        />
+                    }
+                    trigger="click"
+                    visible={ innerData.markVisibility }
+                >
+                    <Item
+                        key="mark"
+                        style={ { paddingLeft: 24 } }
+                        onClick={ () => {
+                            innerData.markVisibility = !innerData.markVisibility
                         } }
                     >
-                        { label }
+                        标注
                     </Item>
-                })
-            }
-            <Popover
-                placement="leftTop"
-                title={ <p>标注</p> }
-                content={
-                    <MarkPanel
-                        onChange={ (data) => {
-                            innerData.markVisibility = false
-                            drawMethod.drawOptions = data
-                            drawMethod.startDraw(() => {
-                                innerData.inputVisibility = true
-                            })
-                        } }
-                    />
-                }
-                trigger="click"
-                visible={ innerData.markVisibility }
-            >
+                </Popover>
                 <Item
-                    key="mark"
-                    style={ { paddingLeft: 24 } }
+                    key="crop"
                     onClick={ () => {
-                        innerData.markVisibility = !innerData.markVisibility
+                        innerData.markVisibility = false
+                        overlay.crop.startCrop()
                     } }
-                >
-                    标注
-                </Item>
-            </Popover>
-        </Menu>
-    </div>
+                >裁剪</Item>
+            </Menu>
+        </div>
+    </>
 }
 
 export default ControlPanel
