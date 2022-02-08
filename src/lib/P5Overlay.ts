@@ -5,8 +5,10 @@ import { render } from 'react-dom'
 import ControlPanel, { ControlPanelProps } from './ControlPanel'
 import { createElement, ComponentType } from 'react'
 import { Point } from 'openseadragon'
+import { EventEmitter } from 'events'
 import _ from 'lodash'
 import { Crop } from './Crop'
+import { CropListItem } from './CropPanel'
 
 type ShapeStyle = 'rect' | 'circle' | 'line' | 'free' | 'text'
 
@@ -30,8 +32,9 @@ interface DrawOptions extends MarkerItem {
 
 interface Options {
     markerStore?: MarkerItem[]
+    cropStore?: CropListItem[]
     ControlPanel?: ComponentType<ControlPanelProps>
-    onCropFinish?: (data: { blob: Blob }) => void
+    onCropFinish?: (data: CropListItem) => void
 }
 
 export default class P5Overlay {
@@ -47,9 +50,19 @@ export default class P5Overlay {
     private readonly ControlPanel!: ComponentType<ControlPanelProps>
     public crop!: Crop
     public onCropFinish: Options['onCropFinish']
+    public cropStore: CropListItem[]
+    public overlayEvent: EventEmitter
 
     constructor (viewer: OpenSeaDragon.Viewer, options: Options) {
-        this.onCropFinish = options.onCropFinish
+        this.overlayEvent = new EventEmitter()
+        this.cropStore = new Proxy(options.cropStore || [], {
+            set: (target, key, value: CropListItem) => {
+                target[key as any] = value
+                this.overlayEvent.emit('cropStoreChange', target)
+                return true
+            }
+        })
+        this.onCropFinish = options.onCropFinish || this.defaultCropFinish.bind(this)
         this.ControlPanel = options.ControlPanel || ControlPanel
         this.markerStore = options.markerStore || []
         this.viewer = viewer
@@ -230,5 +243,9 @@ export default class P5Overlay {
         this.markerStore.forEach(item => {
             this.drawMethod.draw(this.sk, item, 2, zoom,)
         })
+    }
+
+    private defaultCropFinish (data: CropListItem) {
+        this.cropStore.push(data)
     }
 }

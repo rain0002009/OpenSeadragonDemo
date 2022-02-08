@@ -247,7 +247,8 @@ export class Crop {
         const imageCanvas = (this.sk.get(mainInsideRect.x, mainInsideRect.y, mainInsideRect.width, mainInsideRect.height) as any).canvas as HTMLCanvasElement
         imageCanvas.toBlob((blob) => {
             if (blob) {
-                this.onFinish?.({ blob })
+                const url = URL.createObjectURL(blob)
+                this.onFinish?.({ blob, url, key: url })
             }
         })
 
