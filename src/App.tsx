@@ -37,8 +37,8 @@ function App () {
                     clickToZoom: false
                 }
             })
-            _.set(window, 'viewer', viewer)
-            new P5Overlay(viewer, {})
+            const overlay = new P5Overlay(viewer, {})
+            _.set(window, 'overlay', overlay)
         }
         return () => {
             viewer.destroy()

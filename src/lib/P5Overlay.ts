@@ -55,13 +55,7 @@ export default class P5Overlay {
 
     constructor (viewer: OpenSeaDragon.Viewer, options: Options) {
         this.overlayEvent = new EventEmitter()
-        this.cropStore = new Proxy(options.cropStore || [], {
-            set: (target, key, value: CropListItem) => {
-                target[key as any] = value
-                this.overlayEvent.emit('cropStoreChange', target)
-                return true
-            }
-        })
+        this.cropStore = options.cropStore || []
         this.onCropFinish = options.onCropFinish || this.defaultCropFinish.bind(this)
         this.ControlPanel = options.ControlPanel || ControlPanel
         this.markerStore = options.markerStore || []
@@ -247,5 +241,21 @@ export default class P5Overlay {
 
     private defaultCropFinish (data: CropListItem) {
         this.cropStore.push(data)
+        this.overlayEvent.emit('cropStoreChange', this.cropStore)
+    }
+
+    public setCropStore (cropStore: CropListItem[]) {
+        this.cropStore = cropStore
+        this.overlayEvent.emit('cropStoreChange', cropStore)
+    }
+
+    public deleteCropStore (index: number, deleteCount: number = 1) {
+        const deleteArray = this.cropStore.splice(index, deleteCount)
+        deleteArray.forEach(item => {
+            if (item.blob) {
+                URL.revokeObjectURL(item.url)
+            }
+        })
+        this.overlayEvent.emit('cropStoreChange', this.cropStore)
     }
 }

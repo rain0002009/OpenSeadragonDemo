@@ -22,7 +22,7 @@ const CropPanel: FC<Props> = ({ value }) => {
         height={ (value?.length || 0) > 3 ? 3 * 116 : void 0 }
     >
         { (data) => {
-            return <div key={ data.key } className="py-2 w-200px">
+            return <div className="py-2 w-200px">
                 <Image
                     width={ 200 }
                     height={ 100 }
