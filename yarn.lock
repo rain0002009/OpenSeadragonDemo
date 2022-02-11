@@ -2147,6 +2147,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "openseadragon@workspace:."
   dependencies:
+    "@ant-design/icons": ^4.7.0
     "@types/events": ^3.0.0
     "@types/lodash": ^4.14.178
     "@types/openseadragon": ^2.4.2

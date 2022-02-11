@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.7.0",
     "ahooks": "^3.1.9",
     "antd": "^4.18.5",
     "events": "^3.3.0",

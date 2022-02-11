@@ -21,7 +21,8 @@ const CONTROL_TYPES = [
 export interface ControlPanelProps {overlay: P5Overlay}
 
 const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
-    const { sk, viewer, drawMethod, markerStore } = overlay
+    const { sk, viewer, drawMarker } = overlay
+    const { drawOptions } = drawMarker
     const innerData = useReactive({
         markVisibility: false,
         inputVisibility: false,
@@ -38,7 +39,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
         return () => {
             overlay.overlayEvent.off('cropStoreChange', handle)
         }
-    }, [])
+    }, [overlay])
 
     if (!sk) return null
 
@@ -61,7 +62,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
                             innerData.inputText = ''
                             sk.noLoop()
                             viewer.setMouseNavEnabled(true)
-                            drawMethod.drawOptions.enable = false
+                            drawOptions.enable = false
                         } }
                     >取消</Button>
                     <Button
@@ -69,16 +70,16 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
                         className="ml-auto"
                         onClick={ () => {
                             innerData.inputVisibility = false
-                            drawMethod.drawOptions.isInputOk = true
-                            markerStore.push({
-                                ...(drawMethod.drawOptions as any),
-                                path: [[drawMethod.drawOptions!.startPointTransformed!.x, drawMethod.drawOptions!.startPointTransformed!.y]],
+                            drawOptions.isInputOk = true
+                            drawMarker.store.push({
+                                ...(drawOptions as any),
+                                path: [[drawOptions!.startPointTransformed!.x, drawOptions!.startPointTransformed!.y]],
                                 text: innerData.inputText
                             })
                             sk.noLoop()
                             viewer.setMouseNavEnabled(true)
                             innerData.inputText = ''
-                            drawMethod.drawOptions.enable = false
+                            drawOptions.enable = false
                         } }
                     >确认</Button>
                 </div>
@@ -125,8 +126,8 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
                                 <MarkPanel
                                     onChange={ (data) => {
                                         innerData.markVisibility = false
-                                        drawMethod.drawOptions = data
-                                        drawMethod.startDraw(() => {
+                                        drawMarker.setDrawOptions(data)
+                                        drawMarker.startDraw(() => {
                                             innerData.inputVisibility = true
                                         })
                                     } }
@@ -180,6 +181,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
                             </> }
                             content={ <CropPanel
                                 value={ innerData.cropList }
+                                onDelete={ overlay.crop.deleteCropStore.bind(overlay.crop) }
                             /> }
                             visible={ innerData.cropVisibility }
                         >

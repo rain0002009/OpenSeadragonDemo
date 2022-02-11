@@ -3,6 +3,8 @@ import { Point, Rect, Viewer } from 'openseadragon'
 import { Element, Graphics, Image } from 'p5'
 import { render } from 'react-dom'
 import { Button } from 'antd'
+import { CropListItem } from './CropPanel'
+import { EventEmitter } from 'events'
 
 const SQUARE_WIDTH = 8
 const HALF_SQUARE_WIDTH = SQUARE_WIDTH / 2
@@ -11,6 +13,7 @@ const BUTTON_WRAPPER_HEIGHT = 34
 export class Crop {
     private viewer: Viewer
     private sk: P5Overlay['sk']
+    public store: CropListItem[]
     public cropInfo: {
         prevCanvasImage?: Image
         seaDragonImage?: Image
@@ -21,12 +24,13 @@ export class Crop {
     } = {}
     private buttonWrapperDiv: Element
     private readonly pg: Graphics
-    private readonly onFinish?: P5Overlay['onCropFinish']
+    private eventSource: EventEmitter
 
     constructor (overlay: P5Overlay) {
-        this.onFinish = overlay.onCropFinish
+        this.store = []
         this.viewer = overlay.viewer
         this.sk = overlay.sk
+        this.eventSource = overlay.overlayEvent
         this.buttonWrapperDiv = this.sk.createDiv()
         this.buttonWrapperDiv.hide()
         this.buttonWrapperDiv.addClass('w-120px')
@@ -53,6 +57,9 @@ export class Crop {
         this.viewer.container.append(this.buttonWrapperDiv.elt)
     }
 
+    /**
+     * 开始截图
+     */
     public startCrop () {
         if (this.cropInfo.enable) {
             return false
@@ -92,6 +99,9 @@ export class Crop {
         }
     }
 
+    /**
+     * 取消截图
+     */
     public cancelCrop () {
         this.buttonWrapperDiv.hide()
         this.viewer.setMouseNavEnabled(true)
@@ -236,6 +246,10 @@ export class Crop {
         }
     }
 
+    /**
+     * 截图完成
+     * @private
+     */
     private finish () {
         const [startPoint, endPoint] = this.cropInfo.currentSelected!
         const { mainInsideRect } = Crop.getRectFromPoint(startPoint, endPoint)
@@ -248,9 +262,12 @@ export class Crop {
         imageCanvas.toBlob((blob) => {
             if (blob) {
                 const url = URL.createObjectURL(blob)
-                this.onFinish?.({ blob, url, key: url })
+                this.store.push({ blob, url, key: url })
+                this.eventSource.emit('cropStoreChange', this.store)
             }
         })
+
+        this.eventSource.emit('cropFinish', this)
 
         this.cancelCrop()
     }
@@ -258,6 +275,26 @@ export class Crop {
     public resize () {
         const viewerSize = this.viewer.viewport.getContainerSize()
         this.pg.resizeCanvas(viewerSize.x, viewerSize.y)
+    }
+
+    public setStore (cropStore: CropListItem[]) {
+        this.store = cropStore
+        this.eventSource.emit('cropStoreChange', cropStore)
+    }
+
+    /**
+     * 通过index删除截图
+     * @param index
+     * @param deleteCount
+     */
+    public deleteCropStore (index: number, deleteCount: number = 1) {
+        const deleteArray = this.store.splice(index, deleteCount)
+        deleteArray.forEach(item => {
+            if (item.blob) {
+                URL.revokeObjectURL(item.url)
+            }
+        })
+        this.eventSource.emit('cropStoreChange', this.store)
     }
 
     private static getRectFromPoint (startPoint: Point, endPoint: Point) {
