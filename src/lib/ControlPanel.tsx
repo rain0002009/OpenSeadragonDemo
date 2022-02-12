@@ -1,7 +1,7 @@
 import { FC, useEffect } from 'react'
 import { Button, Input, Menu, Popover } from 'antd'
 import MarkPanel from './MarkPanel'
-import { useReactive } from 'ahooks'
+import { useCreation, useReactive } from 'ahooks'
 import P5Overlay from './P5Overlay'
 import CropPanel, { CropListItem } from './CropPanel'
 
@@ -18,9 +18,15 @@ const CONTROL_TYPES = [
     }
 ]
 
-export interface ControlPanelProps {overlay: P5Overlay}
+export interface ControlPanelProps {
+    overlay: P5Overlay
+    beforeDeleteCrop?: (deleteCrop: CropListItem, index: number) => Promise<boolean> | boolean
+}
 
-const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
+const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
+    const beforeDelete = useCreation((() => {
+        return beforeDeleteCrop ? beforeDeleteCrop : () => true
+    }), [beforeDeleteCrop])
     const { sk, viewer, drawMarker } = overlay
     const { drawOptions } = drawMarker
     const innerData = useReactive({
@@ -181,7 +187,11 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay }) => {
                             </> }
                             content={ <CropPanel
                                 value={ innerData.cropList }
-                                onDelete={ overlay.crop.deleteCropStore.bind(overlay.crop) }
+                                onDelete={ async (index) => {
+                                    if (await beforeDelete(innerData.cropList[index], index)) {
+                                        overlay.crop.deleteCropStore(index)
+                                    }
+                                } }
                             /> }
                             visible={ innerData.cropVisibility }
                         >

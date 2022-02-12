@@ -27,13 +27,15 @@ function App () {
             navigatorHeight: 100,
             navigatorWidth: 200,
             navigatorPosition: 'TOP_LEFT',
-            tileSources: [tileSource.current],
             gestureSettingsMouse: {
                 dblClickToZoom: false,
                 clickToZoom: false
             }
         } }
         controlPanel={ ControlPanel }
+        onReady={ ({ viewer }) => {
+            viewer.open(tileSource.current)
+        } }
     />
 }
 

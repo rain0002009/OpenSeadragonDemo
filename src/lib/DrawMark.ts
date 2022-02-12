@@ -40,7 +40,8 @@ export class DrawMark {
         this.drawOptions.freePath = []
         this.sk.loop()
 
-        this.sk.mousePressed = () => {
+        this.sk.mousePressed = (event: any) => {
+            if (event.target.nodeName !== 'CANVAS') return false
             this.drawOptions!.startPoint = new Point(this.sk.mouseX, this.sk.mouseY)
             if (this.drawOptions?.type === 'text') {
                 const inputWrap = this.sk.select('#inputWrap')
@@ -52,7 +53,8 @@ export class DrawMark {
                 }
             }
         }
-        this.sk.mouseReleased = () => {
+        this.sk.mouseReleased = (event: any) => {
+            if (event.target.nodeName !== 'CANVAS') return false
             if (this.drawOptions?.type === 'text') {
                 this.sk.mousePressed = _.noop
                 return false
@@ -149,9 +151,10 @@ export class DrawMark {
                     break
                 case 'text':
                     if (mode === 1 ? drawOptions.isInputOk : true) {
-                        sk.textSize(strokeWeight * 25)
+                        const textSize = strokeWeight * 20
+                        sk.textSize(textSize)
                         sk.fill(color)
-                        sk.text(drawOptions.text!, startPoint.x, startPoint.y)
+                        sk.text(drawOptions.text!, startPoint.x, startPoint.y + (textSize / 2))
                     }
                     break
             }
