@@ -25,7 +25,7 @@ const MarkPanel: FC<Props> = ({ onChange }) => {
     })
     return <div className="w-230px space-y-4">
         <div>
-            <p>画笔粗细：</p>
+            <p>画笔粗细：{ innerData.strokeWeight }</p>
             <Slider
                 min={ 10 }
                 max={ 100 }
@@ -35,7 +35,7 @@ const MarkPanel: FC<Props> = ({ onChange }) => {
             />
         </div>
         <div>
-            <p>透明度：</p>
+            <p>透明度：{ innerData.opacity }</p>
             <Slider
                 min={ 0.1 }
                 max={ 1 }
@@ -47,7 +47,10 @@ const MarkPanel: FC<Props> = ({ onChange }) => {
             />
         </div>
         <div>
-            <p>颜色：</p>
+            <p>颜色：<span
+                className="inline-block w-15px h-15px rounded-100px"
+                style={ { backgroundColor: innerData.color, verticalAlign: -3 } }
+            /></p>
             <CirclePicker
                 onChange={ (color) => {
                     innerData.color = color.hex

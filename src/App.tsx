@@ -27,6 +27,7 @@ function App () {
             navigatorHeight: 100,
             navigatorWidth: 200,
             navigatorPosition: 'TOP_LEFT',
+            // 禁止鼠标双击放大缩小
             gestureSettingsMouse: {
                 dblClickToZoom: false,
                 clickToZoom: false
