@@ -90,10 +90,22 @@ export class Crop {
             if (!this.cropInfo.enable || event.target.nodeName !== 'CANVAS') return false
             if (!this.cropInfo.currentSelected) {
                 this.cropInfo.currentSelected = [
-                    this.cropInfo.startPoint!,
-                    new Point(this.sk.mouseX, this.sk.mouseY)
+                    new Point(Math.min(this.cropInfo.startPoint!.x, this.sk.mouseX), Math.min(this.cropInfo.startPoint!.y, this.sk.mouseY)),
+                    new Point(Math.max(this.cropInfo.startPoint!.x, this.sk.mouseX), Math.max(this.cropInfo.startPoint!.y, this.sk.mouseY))
                 ]
+                let temp = this.cropInfo.currentSelected[0]
+                if (this.cropInfo.currentSelected[0].x > this.cropInfo.currentSelected[1].x) {
+                    this.cropInfo.currentSelected[0] = this.cropInfo.currentSelected[1]
+                    this.cropInfo.currentSelected[1] = temp
+                }
                 this.buttonWrapperDiv.show()
+            } else {
+                const p0 = this.cropInfo.currentSelected![0]
+                const p1 = this.cropInfo.currentSelected![1]
+                this.cropInfo.currentSelected = [
+                    new Point(Math.min(p0.x, p1.x), Math.min(p0.y, p1.y)),
+                    new Point(Math.max(p0.x, p1.x), Math.max(p0.y, p1.y))
+                ]
             }
             this.cropInfo.startPoint = void 0
         }
@@ -180,8 +192,8 @@ export class Crop {
             bottomRightRect,
             topLeftPoint
         } = Crop.getRectFromPoint(startPoint, endPoint)
-
-        this.buttonWrapperDiv.position(topLeftPoint.x, topLeftPoint.y - BUTTON_WRAPPER_HEIGHT)
+        const divTop = topLeftPoint.y - BUTTON_WRAPPER_HEIGHT
+        this.buttonWrapperDiv.position(topLeftPoint.x, divTop < 0 ? bottomLeftRect.y + 16 : divTop)
         if (!this.sk.mouseIsPressed) {
             this.cropInfo.onWhere = void 0
             if (mainRect.containsPoint(currentMousePoint)) {
@@ -207,40 +219,48 @@ export class Crop {
         if (this.sk.mouseIsPressed) {
             const deltaX = currentMousePoint.x - this.sk.pmouseX
             const deltaY = currentMousePoint.y - this.sk.pmouseY
+            const p0 = this.cropInfo.currentSelected![0]
+            const p1 = this.cropInfo.currentSelected![1]
+            const width = p1.x - p0.x
+            const height = p1.y - p0.y
+            const nextTop = this.sk.constrain(p0.y + deltaY, 0, this.sk.height)
+            const nextRight = this.sk.constrain(p1.x + deltaX, 0, this.sk.width)
+            const nextBottom = this.sk.constrain(p1.y + deltaY, 0, this.sk.height)
+            const nextLeft = this.sk.constrain(p0.x + deltaX, 0, this.sk.width)
             switch (this.cropInfo.onWhere) {
                 case 'inside':
-                    this.cropInfo.currentSelected?.forEach((point) => {
-                        point.x += deltaX
-                        point.y += deltaY
-                    })
+                    p0.x = this.sk.constrain(p0.x + deltaX, 0, this.sk.width - width)
+                    p0.y = this.sk.constrain(p0.y + deltaY, 0, this.sk.height - height)
+                    p1.x = p0.x + width
+                    p1.y = p0.y + height
                     break
                 case 'top':
-                    this.cropInfo.currentSelected![0].y += deltaY
+                    this.cropInfo.currentSelected![0].y = nextTop
                     break
                 case 'right':
-                    this.cropInfo.currentSelected![1].x += deltaX
+                    this.cropInfo.currentSelected![1].x = nextRight
                     break
                 case 'bottom':
-                    this.cropInfo.currentSelected![1].y += deltaY
+                    this.cropInfo.currentSelected![1].y = nextBottom
                     break
                 case 'left':
-                    this.cropInfo.currentSelected![0].x += deltaX
+                    this.cropInfo.currentSelected![0].x = nextLeft
                     break
                 case 'topLeft':
-                    this.cropInfo.currentSelected![0].x += deltaX
-                    this.cropInfo.currentSelected![0].y += deltaY
+                    this.cropInfo.currentSelected![0].y = nextTop
+                    this.cropInfo.currentSelected![0].x = nextLeft
                     break
                 case 'topRight':
-                    this.cropInfo.currentSelected![1].x += deltaX
-                    this.cropInfo.currentSelected![0].y += deltaY
+                    this.cropInfo.currentSelected![0].y = nextTop
+                    this.cropInfo.currentSelected![1].x = nextRight
                     break
                 case 'bottomRight':
-                    this.cropInfo.currentSelected![1].x += deltaX
-                    this.cropInfo.currentSelected![1].y += deltaY
+                    this.cropInfo.currentSelected![1].y = nextBottom
+                    this.cropInfo.currentSelected![1].x = nextRight
                     break
                 case 'bottomLeft':
-                    this.cropInfo.currentSelected![0].x += deltaX
-                    this.cropInfo.currentSelected![1].y += deltaY
+                    this.cropInfo.currentSelected![1].y = nextBottom
+                    this.cropInfo.currentSelected![0].x = nextLeft
                     break
             }
         }
