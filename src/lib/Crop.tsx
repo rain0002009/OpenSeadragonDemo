@@ -117,8 +117,10 @@ export class Crop {
     public cancelCrop () {
         this.buttonWrapperDiv.hide()
         this.viewer.setMouseNavEnabled(true)
+        try {
+            this.sk.cursor(this.sk.ARROW)
+        } catch (e) {}
         this.sk.noLoop()
-        this.sk.cursor(this.sk.ARROW)
         this.cropInfo = {}
     }
 
