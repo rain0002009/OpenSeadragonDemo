@@ -1,22 +1,9 @@
 import { FC, useEffect } from 'react'
-import { Button, Input, Menu, Popover } from 'antd'
+import { Button, Input, Popover } from 'antd'
 import MarkPanel from './MarkPanel'
 import { useCreation, useReactive } from 'ahooks'
 import P5Overlay from './P5Overlay'
 import CropPanel, { CropListItem } from './CropPanel'
-
-const { Item } = Menu
-
-const CONTROL_TYPES = [
-    {
-        type: 'fullscreen',
-        label: '全屏',
-    },
-    {
-        type: 'home',
-        label: '主页',
-    }
-]
 
 export interface ControlPanelProps {
     overlay: P5Overlay
@@ -94,120 +81,85 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
         >
             <div id="inputWrap" />
         </Popover>
-        <div className="absolute right-0 w-100px">
-            <Menu
-                mode="inline"
-                className="border border-color-[#dedede] shadow"
+        <div className="absolute right-0 w-100px h-200px">
+            <div
+                className="border border-color-hex-dedede shadow px-2 py-3 space-y-2 bg-white"
             >
-                {
-                    CONTROL_TYPES.map(({ type, label }) => {
-                        return <Item
-                            key={ type }
-                            onClick={ ({ key }) => {
-                                switch (key) {
-                                    case 'fullscreen':
-                                        viewer.setFullScreen(true)
-                                        break
-                                    case 'home':
-                                        viewer.viewport.goHome(true)
-                                        break
-                                }
+                <Button block onClick={ () => {viewer.setFullScreen(true)} }>全屏</Button>
+                <Button block onClick={ () => {viewer.viewport.goHome(true)} }>主页</Button>
+                <Popover
+                    className=""
+                    placement="leftTop"
+                    title={ <p>标注</p> }
+                    content={
+                        <MarkPanel
+                            onChange={ (data) => {
+                                innerData.markVisibility = false
+                                drawMarker.setDrawOptions(data)
+                                drawMarker.startDraw(() => {
+                                    innerData.inputVisibility = true
+                                })
                             } }
-                        >
-                            { label }
-                        </Item>
-                    })
-                }
-                <Item
-                    key="mark"
-                    style={ { paddingLeft: 24 } }
+                        />
+                    }
+                    trigger="click"
+                    visible={ innerData.markVisibility }
                 >
-                    <div
-                        className="absolute top-0 right-0 bottom-0 left-0 flex items-center"
+                    <Button
+                        block
+                        onClick={ () => {
+                            innerData.markVisibility = !innerData.markVisibility
+                            innerData.cropVisibility = false
+                        } }
                     >
-                        <Popover
-                            className="pl-24px"
-                            placement="leftTop"
-                            title={ <p>标注</p> }
-                            content={
-                                <MarkPanel
-                                    onChange={ (data) => {
-                                        innerData.markVisibility = false
-                                        drawMarker.setDrawOptions(data)
-                                        drawMarker.startDraw(() => {
-                                            innerData.inputVisibility = true
-                                        })
-                                    } }
-                                />
+                        标注
+                    </Button>
+                </Popover>
+                <Popover
+                    className=""
+                    placement="leftTop"
+                    style={ { zIndex: 1000 } }
+                    title={ <>
+                        <Button
+                            type="primary"
+                            size="small"
+                            onClick={ () => {
+                                overlay.crop.startCrop()
+                                innerData.cropVisibility = false
+                            } }
+                        >开始</Button>
+                        <Button
+                            type="primary"
+                            size="small"
+                            danger
+                            className="ml-4"
+                            onClick={ () => {
+                                innerData.cropVisibility = false
+                                overlay.crop.cancelCrop()
+                            } }
+                        >取消</Button>
+                    </> }
+                    content={ <CropPanel
+                        value={ innerData.cropList }
+                        onDelete={ async (index) => {
+                            if (await beforeDelete(innerData.cropList[index], index)) {
+                                overlay.crop.deleteCropStore(index)
                             }
-                            trigger="click"
-                            visible={ innerData.markVisibility }
-                        >
-                            <a
-                                onClick={ () => {
-                                    innerData.markVisibility = !innerData.markVisibility
-                                    innerData.cropVisibility = false
-                                } }
-                            >
-                                标注
-                            </a>
-                        </Popover>
-                    </div>
-                </Item>
-
-                <Item
-                    key="crop"
-                    style={ { paddingLeft: 24 } }
+                        } }
+                    /> }
+                    visible={ innerData.cropVisibility }
                 >
-                    <div
-                        className="absolute top-0 right-0 bottom-0 left-0 flex items-center"
+                    <Button
+                        block
+                        onClick={ () => {
+                            innerData.markVisibility = false
+                            innerData.cropVisibility = !innerData.cropVisibility
+                        } }
                     >
-                        <Popover
-                            className="pl-24px"
-                            placement="leftTop"
-                            style={ { zIndex: 1000 } }
-                            title={ <>
-                                <Button
-                                    type="primary"
-                                    size="small"
-                                    onClick={ () => {
-                                        overlay.crop.startCrop()
-                                        innerData.cropVisibility = false
-                                    } }
-                                >开始</Button>
-                                <Button
-                                    type="primary"
-                                    size="small"
-                                    danger
-                                    className="ml-4"
-                                    onClick={ () => {
-                                        innerData.cropVisibility = false
-                                        overlay.crop.cancelCrop()
-                                    } }
-                                >取消</Button>
-                            </> }
-                            content={ <CropPanel
-                                value={ innerData.cropList }
-                                onDelete={ async (index) => {
-                                    if (await beforeDelete(innerData.cropList[index], index)) {
-                                        overlay.crop.deleteCropStore(index)
-                                    }
-                                } }
-                            /> }
-                            visible={ innerData.cropVisibility }
-                        >
-                            <a
-                                onClick={ () => {
-                                    innerData.markVisibility = false
-                                    innerData.cropVisibility = !innerData.cropVisibility
-                                } }
-                            >
-                                裁剪
-                            </a>
-                        </Popover>
-                    </div>
-                </Item>
-            </Menu>
+                        裁剪
+                    </Button>
+                </Popover>
+            </div>
         </div>
     </>
 }
