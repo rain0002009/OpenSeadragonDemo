@@ -4,8 +4,17 @@ import { Button, Image, Empty } from 'antd'
 import { DeleteOutlined } from '@ant-design/icons'
 
 export interface CropListItem {
+    /**
+     * 图片的url地址
+     */
     url: string
+    /**
+     * 图片Blob对象
+     */
     blob?: Blob
+    /**
+     * 图片唯一id
+     */
     key: string | number
 }
 

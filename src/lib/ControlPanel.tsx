@@ -50,6 +50,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
     if (!sk) return null
 
     return <>
+        { overlay?.crop?.holder }
         <Popover
             zIndex={ 10 }
             visible={ innerData.inputVisibility }

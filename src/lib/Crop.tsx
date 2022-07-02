@@ -1,7 +1,7 @@
 import P5Overlay from './P5Overlay'
 import { Point, Rect, Viewer } from 'openseadragon'
 import { Element, Graphics, Image } from 'p5'
-import { render } from 'react-dom'
+import { createPortal } from 'react-dom'
 import { Button } from 'antd'
 import { CropListItem } from './CropPanel'
 import { EventEmitter } from 'events'
@@ -13,6 +13,9 @@ const BUTTON_WRAPPER_HEIGHT = 34
 export class Crop {
     private viewer: Viewer
     private sk: P5Overlay['sk']
+    /**
+     * 存储截图文件对象
+     */
     public store: CropListItem[]
     public cropInfo: {
         prevCanvasImage?: Image
@@ -25,6 +28,10 @@ export class Crop {
     private buttonWrapperDiv: Element
     private readonly pg: Graphics
     private eventSource: EventEmitter
+    /**
+     * 裁剪确认按钮
+     */
+    public holder: React.ReactPortal
 
     constructor (overlay: P5Overlay) {
         this.store = []
@@ -36,7 +43,7 @@ export class Crop {
         this.buttonWrapperDiv.addClass('w-120px')
         const viewerSize = this.viewer.viewport.getContainerSize()
         this.pg = this.sk.createGraphics(viewerSize.x, viewerSize.y)
-        render(<>
+        this.holder = createPortal(<>
             <Button
                 size="small"
                 type="primary"
