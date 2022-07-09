@@ -12,19 +12,18 @@ import { useMemoizedFn, useReactive } from 'ahooks'
 
 interface Props {
     options: OpenSeaDragon.Options
-    controlPanel?: React.ComponentType<ControlPanelProps>
+    ControlPanel?: FC<ControlPanelProps>
     onReady?: (payload: { viewer: OpenSeadragon.Viewer, overlay: P5Overlay }) => void
     beforeDeleteCrop?: ControlPanelProps['beforeDeleteCrop']
 }
 
 const OpenSeaDragonView: FC<Props> = ({
     options,
-    controlPanel,
+    ControlPanel,
     onReady,
     beforeDeleteCrop
 }) => {
     const [overlay, setOverlay] = useState<P5Overlay>()
-    const ControlPanel = controlPanel || (() => null)
     const innerData = useReactive({
         controlPanelVisible: false,
     })
@@ -53,17 +52,18 @@ const OpenSeaDragonView: FC<Props> = ({
             viewer.destroy()
         }
     }, [])
-    return <div>
+    return <>
         <div className="h-100vh w-full z-1" ref={ domEl } />
         {
             innerData.controlPanelVisible
             && overlay
+            && ControlPanel
             && createPortal(<ControlPanel
                 overlay={ overlay }
                 beforeDeleteCrop={ beforeDeleteCrop }
             />, controlPanelEl.current)
         }
-    </div>
+    </>
 }
 
 export default OpenSeaDragonView

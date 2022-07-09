@@ -1,29 +1,20 @@
-import P5Overlay, { MarkerItem } from './P5Overlay'
+import P5Overlay from './P5Overlay'
 import { Point } from 'openseadragon'
-import _ from 'lodash'
-
-interface DrawOptions extends MarkerItem {
-    startPoint?: Point | null
-    endPoint?: Point | null
-    isInputOk?: boolean
-    startPointTransformed?: Point | null
-    freePath?: [number, number][]
-    enable?: boolean
-}
+import { noop } from 'lodash-es'
+import { DrawMethod } from './draw'
+import { Draw, DrawData } from './draw/Draw'
 
 type SK = P5Overlay['sk']
 
 export class DrawMark {
     private overlay: P5Overlay
-    public drawOptions: DrawOptions
     private readonly sk: SK
-    public store: MarkerItem[]
+    private drawMethods: DrawMethod
 
     constructor (overlay: P5Overlay) {
         this.overlay = overlay
-        this.drawOptions = {}
         this.sk = overlay.sk
-        this.store = []
+        this.drawMethods = new DrawMethod(overlay.sk)
     }
 
     /**
@@ -32,21 +23,21 @@ export class DrawMark {
      */
     public startDraw (openTextModal?: () => void) {
         this.overlay.crop.cancelCrop()
-        this.drawOptions.enable = true
+        Draw.drawData.enable = true
         this.overlay.viewer.setMouseNavEnabled(false)
-        this.drawOptions.startPoint = null
-        this.drawOptions.endPoint = null
-        this.drawOptions.startPointTransformed = null
-        this.drawOptions.freePath = []
+        Draw.drawData.startPoint = null
+        Draw.drawData.endPoint = null
+        Draw.drawData.startPointTransformed = null
+        this.drawMethods.methods[Draw.drawData.type || '']?.start?.()
         this.sk.loop()
 
         this.sk.mousePressed = (event: any) => {
             if (event.target.nodeName !== 'CANVAS') return false
-            this.drawOptions!.startPoint = new Point(this.sk.mouseX, this.sk.mouseY)
-            if (this.drawOptions?.type === 'text') {
+            Draw.drawData!.startPoint = new Point(this.sk.mouseX, this.sk.mouseY)
+            if (Draw.drawData.type === 'text') {
                 const inputWrap = this.sk.select('#inputWrap')
                 if (inputWrap) {
-                    inputWrap?.position(this.drawOptions.startPoint.x, this.drawOptions.startPoint.y)
+                    inputWrap?.position(Draw.drawData.startPoint.x, Draw.drawData.startPoint.y)
                     openTextModal?.()
                 } else {
                     console.error('inputWrap is null')
@@ -55,30 +46,17 @@ export class DrawMark {
         }
         this.sk.mouseReleased = (event: any) => {
             if (event.target.nodeName !== 'CANVAS') return false
-            if (this.drawOptions?.type === 'text') {
-                this.sk.mousePressed = _.noop
+            if (Draw.drawData.type === 'text') {
+                this.sk.mousePressed = noop
                 return false
             }
-            this.drawOptions.enable = false
+            Draw.drawData.enable = false
             this.sk.noLoop()
             this.overlay.viewer.setMouseNavEnabled(true)
-            this.sk.mousePressed = _.noop
-            const markItem = {
-                ...this.drawOptions!
-            }
-            switch (this.drawOptions?.type) {
-                case 'circle':
-                case 'rect':
-                case 'line':
-                    markItem.path = [[this.drawOptions.startPointTransformed!.x, this.drawOptions!.startPointTransformed!.y], [this.drawOptions!.endPoint!.x, this.drawOptions!.endPoint!.y]]
-                    break
-                case 'free':
-                    markItem.path = this.drawOptions!.freePath
-                    break
-            }
-            this.store.push(markItem)
-            this.drawOptions = {}
-            this.sk.mouseReleased = _.noop
+            this.sk.mousePressed = noop
+            this.drawMethods.methods[Draw.drawData.type || ''].end?.()
+            Draw.drawData = {}
+            this.sk.mouseReleased = noop
         }
     }
 
@@ -87,7 +65,7 @@ export class DrawMark {
      * @param zoom
      */
     public drawMarkStore (zoom: number) {
-        this.store.forEach(item => {
+        Draw.store.forEach(item => {
             this.draw(this.sk, item, 2, zoom,)
         })
     }
@@ -96,15 +74,16 @@ export class DrawMark {
      * 根据drawOptions设置绘画单个图形
      * @param sk
      * @param drawOptions
-     * @param mode
+     * @param mode 1：用户操作。2：历史记录
      * @param zoom
      * @param image
      */
-    public draw (sk: SK, drawOptions: DrawOptions, mode: 1 | 2, zoom: number, image?: OpenSeadragon.TiledImage) {
+    public draw (sk: SK, drawOptions: DrawData, mode: 1 | 2, zoom: number, image?: OpenSeadragon.TiledImage) {
+        const drawInstance = this.drawMethods.methods[drawOptions.type || '']
         const canDraw = mode === 1 ? drawOptions.enable && sk.mouseIsPressed && drawOptions && drawOptions.startPoint && sk.mouseButton === sk.LEFT : true
         if (canDraw) {
             sk.push()
-            const color = sk.color(drawOptions!.color!)
+            const color = sk.color(drawOptions!.color! as string)
             color.setAlpha(sk.map(drawOptions!.opacity!, 0, 1, 0, 255))
             drawOptions.startPointTransformed = image?.viewerElementToImageCoordinates(drawOptions.startPoint!)
             drawOptions.endPoint = image?.viewerElementToImageCoordinates(new Point(sk.mouseX, sk.mouseY))
@@ -118,56 +97,31 @@ export class DrawMark {
                 startPoint = new Point(...drawOptions.path![0])
                 endPoint = new Point(...(drawOptions.path?.[1] || [0, 0]))
             }
-            if (['circle', 'rect', 'line', 'free'].includes(drawOptions!.type!)) {
+            if (drawInstance.needStroke) {
                 sk.noFill()
                 sk.strokeWeight(strokeWeight * 2)
                 sk.stroke(color)
             }
-            switch (drawOptions?.type) {
-                case 'circle':
-                    sk.circle(startPoint.x, startPoint.y, startPoint.distanceTo(endPoint) * 2)
-                    break
-                case 'rect':
-                    sk.quad(startPoint.x, startPoint.y, endPoint.x, startPoint.y, endPoint.x, endPoint.y, startPoint.x, endPoint.y)
-                    break
-                case 'line':
-                    sk.line(startPoint.x, startPoint.y, endPoint.x, endPoint.y)
-                    break
-                case 'free':
-                    if (mode == 1) {
-                        if (drawOptions.freePath?.length === 0) {
-                            drawOptions.freePath.push([startPoint.x, startPoint.y])
-                        }
-                        if ((new Point(..._.last(drawOptions.freePath)!).distanceTo(endPoint)) > 20) {
-                            drawOptions.freePath?.push([endPoint.x, endPoint.y])
-                        }
-                    }
-                    drawOptions[mode === 1 ? 'freePath' : 'path']?.forEach((point, pointIndex) => {
-                        const nextPoint = drawOptions.freePath?.[pointIndex + 1]
-                        if (nextPoint) {
-                            sk.line(...point, ...nextPoint)
-                        }
-                    })
-                    break
-                case 'text':
-                    if (mode === 1 ? drawOptions.isInputOk : true) {
-                        const textSize = strokeWeight * 20
-                        sk.textSize(textSize)
-                        sk.fill(color)
-                        sk.text(drawOptions.text!, startPoint.x, startPoint.y + (textSize / 2))
-                    }
-                    break
+            Draw.mode = mode
+            if (drawOptions?.type) {
+                drawInstance?.draw({
+                    ...drawOptions,
+                    color,
+                    startPoint,
+                    endPoint,
+                    strokeWeight
+                })
             }
             sk.pop()
         }
     }
 
-    public setDrawOptions (drawOptions: DrawOptions) {
-        this.drawOptions = drawOptions
+    public setDrawOptions (drawOptions: DrawData) {
+        Draw.drawData = drawOptions
     }
 
-    public setStore (markStore: MarkerItem[]) {
-        this.store = markStore
+    public setStore (markStore: DrawData[]) {
+        Draw.store = markStore
         this.overlay.redraw()
     }
 }

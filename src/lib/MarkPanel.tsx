@@ -2,10 +2,10 @@ import React, { FC } from 'react'
 import { Button, Slider } from 'antd'
 import { CirclePicker } from 'react-color'
 import { useReactive } from 'ahooks'
-import { MarkerItem } from './P5Overlay'
+import { DrawData } from './draw/Draw'
 
 interface Props {
-    onChange?: (data: MarkerItem) => void
+    onChange?: (data: DrawData) => void
 }
 
 const TYPES = [
@@ -17,11 +17,11 @@ const TYPES = [
 ]
 
 const MarkPanel: FC<Props> = ({ onChange }) => {
-    const innerData = useReactive<MarkerItem>({
+    const innerData = useReactive<DrawData>({
         strokeWeight: 10,
         opacity: 1,
         color: '#3f51b5',
-        type: null
+        type: void 0
     })
     return <div className="w-230px space-y-4">
         <div>
@@ -49,7 +49,7 @@ const MarkPanel: FC<Props> = ({ onChange }) => {
         <div>
             <p>颜色：<span
                 className="inline-block w-15px h-15px rounded-100px"
-                style={ { backgroundColor: innerData.color, verticalAlign: -3 } }
+                style={ { backgroundColor: innerData.color as string, verticalAlign: -3 } }
             /></p>
             <CirclePicker
                 onChange={ (color) => {

@@ -157,7 +157,7 @@ export class Crop {
     private drawQuad (startPoint: Point, endPoint: Point) {
         if (startPoint && 'globalCompositeOperation' in this.pg.drawingContext) {
             const points = [new Point(startPoint.x, startPoint.y), new Point(endPoint.x, startPoint.y), new Point(endPoint.x, endPoint.y), new Point(startPoint.x, endPoint.y)]
-            this.pg.clear()
+            this.pg.clear(0, 0, 0, 0)
             this.pg.background(0, 0, 0, 120)
             this.pg.push()
             this.pg.drawingContext.globalCompositeOperation = 'destination-out'
@@ -284,7 +284,7 @@ export class Crop {
         const { mainInsideRect } = Crop.getRectFromPoint(startPoint, endPoint)
         this.cropInfo.enable = false
         this.sk.noLoop()
-        this.sk.clear()
+        this.sk.clear(0, 0, 0, 0)
         this.cropInfo.seaDragonImage && this.sk.image(this.cropInfo.seaDragonImage, 0, 0, this.sk.width, this.sk.height)
         this.sk.image(this.cropInfo.prevCanvasImage!, 0, 0, this.sk.width, this.sk.height)
         const imageCanvas = (this.sk.get(mainInsideRect.x, mainInsideRect.y, mainInsideRect.width, mainInsideRect.height) as any).canvas as HTMLCanvasElement

@@ -4,17 +4,7 @@ import './index.less'
 import { EventEmitter } from 'events'
 import { Crop } from './Crop'
 import { DrawMark } from './DrawMark'
-
-type ShapeStyle = 'rect' | 'circle' | 'line' | 'free' | 'text'
-
-export interface MarkerItem {
-    type?: ShapeStyle | null | string
-    strokeWeight?: number
-    color?: string
-    opacity?: number
-    path?: [number, number][]
-    text?: string
-}
+import { Draw } from './draw/Draw'
 
 export default class P5Overlay {
     public viewer: OpenSeaDragon.Viewer
@@ -39,20 +29,20 @@ export default class P5Overlay {
                 sk.noLoop()
             }
             sk.draw = () => {
-                let viewportZoom = this.viewer.viewport.getZoom(true)
+                const viewportZoom = this.viewer.viewport.getZoom(true)
                 sk.clear()
                 for (let i = 0, count = this.viewer.world.getItemCount(); i < count; i++) {
                     let image = this.viewer.world.getItemAt(i)
                     if (image) {
-                        let zoom = image.viewportToImageZoom(viewportZoom)
-                        let vp = image.imageToViewportCoordinates(0, 0, true)
-                        let p = this.viewer.viewport.pixelFromPoint(vp, true)
+                        const zoom = image.viewportToImageZoom(viewportZoom)
+                        const vp = image.imageToViewportCoordinates(0, 0, true)
+                        const p = this.viewer.viewport.pixelFromPoint(vp, true)
                         if (!this.crop.cropInfo.enable) {
                             sk.push()
                             sk.translate(p.x, p.y)
                             sk.scale(zoom, zoom)
                             this.drawMarker.drawMarkStore(viewportZoom)
-                            this.drawMarker.draw(sk, this.drawMarker.drawOptions, 1, viewportZoom, image)
+                            this.drawMarker.draw(sk, Draw.drawData, 1, viewportZoom, image)
                             sk.pop()
                         }
                         this.crop.doCrop()

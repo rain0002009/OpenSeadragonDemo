@@ -15,29 +15,29 @@ function App () {
         }
     }))
     return <OpenSeaDragonView
-        options={ {
-            crossOriginPolicy: 'Anonymous',
-            // 不显示基础导航按钮
-            showNavigationControl: false,
-            // 显示小地图
-            showNavigator: true,
-            navigatorAutoFade: false,
-            // 小地图自动缩放,关闭以提高性能
-            navigatorAutoResize: false,
-            navigatorHeight: 100,
-            navigatorWidth: 200,
-            navigatorPosition: 'TOP_LEFT',
-            // 禁止鼠标双击放大缩小
-            gestureSettingsMouse: {
-                dblClickToZoom: false,
-                clickToZoom: false
-            }
-        } }
-        controlPanel={ ControlPanel }
-        onReady={ ({ viewer }) => {
-            viewer.open(tileSource.current)
-        } }
-    />
+            options={ {
+                crossOriginPolicy: 'Anonymous',
+                // 不显示基础导航按钮
+                showNavigationControl: false,
+                // 显示小地图
+                showNavigator: true,
+                navigatorAutoFade: false,
+                // 小地图自动缩放,关闭以提高性能
+                navigatorAutoResize: false,
+                navigatorHeight: 100,
+                navigatorWidth: 200,
+                navigatorPosition: 'TOP_LEFT',
+                // 禁止鼠标双击放大缩小
+                gestureSettingsMouse: {
+                    dblClickToZoom: false,
+                    clickToZoom: false
+                }
+            } }
+            ControlPanel={ ControlPanel }
+            onReady={ ({ viewer }) => {
+                viewer.open(tileSource.current)
+            } }
+        />
 }
 
 export default App

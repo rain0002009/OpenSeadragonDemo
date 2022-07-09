@@ -4,6 +4,7 @@ dist
 dist-ssr
 *.local
 .idea
+.vscode
 
 # yarn v2
 .yarn/cache

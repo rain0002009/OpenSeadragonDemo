@@ -4,6 +4,7 @@ import MarkPanel from './MarkPanel'
 import { useCreation, useReactive } from 'ahooks'
 import P5Overlay from './P5Overlay'
 import CropPanel, { CropListItem } from './CropPanel'
+import { Draw } from './draw/Draw'
 
 export interface ControlPanelProps {
     overlay: P5Overlay
@@ -15,7 +16,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
         return beforeDeleteCrop ? beforeDeleteCrop : () => true
     }), [beforeDeleteCrop])
     const { sk, viewer, drawMarker } = overlay
-    const { drawOptions } = drawMarker
+    const drawOptions = Draw.drawData
     const innerData = useReactive({
         markVisibility: false,
         inputVisibility: false,
@@ -65,7 +66,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
                         onClick={ () => {
                             innerData.inputVisibility = false
                             drawOptions.isInputOk = true
-                            drawMarker.store.push({
+                            Draw.store.push({
                                 ...(drawOptions as any),
                                 path: [[drawOptions!.startPointTransformed!.x, drawOptions!.startPointTransformed!.y]],
                                 text: innerData.inputText
