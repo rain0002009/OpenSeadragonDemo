@@ -1,7 +1,7 @@
 {
   "name": "openseadragon",
   "version": "0.0.1",
-  "packageManager": "yarn@3.1.1",
+  "packageManager": "yarn@3.2.1",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -30,7 +30,7 @@
     "@types/react-dom": "^17.0.10",
     "@vitejs/plugin-react": "^1.0.7",
     "less": "^4.1.2",
-    "typescript": "^4.4.4",
+    "typescript": "^4.7.4",
     "vite": "^2.9.13",
     "vite-plugin-style-import": "^1.4.1",
     "vite-plugin-windicss": "^1.8.6",
