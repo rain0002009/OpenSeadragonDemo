@@ -96,8 +96,8 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
                         <MarkPanel
                             onChange={ (data) => {
                                 innerData.markVisibility = false
-                                drawMarker.setDrawOptions(data)
-                                drawMarker.startDraw(() => {
+                                drawMarker?.setDrawOptions(data)
+                                drawMarker?.startDraw(() => {
                                     innerData.inputVisibility = true
                                 })
                             } }
@@ -125,7 +125,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
                             type="primary"
                             size="small"
                             onClick={ () => {
-                                overlay.crop.startCrop()
+                                overlay.crop?.startCrop()
                                 innerData.cropVisibility = false
                             } }
                         >开始</Button>
@@ -136,7 +136,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
                             className="ml-4"
                             onClick={ () => {
                                 innerData.cropVisibility = false
-                                overlay.crop.cancelCrop()
+                                overlay.crop?.cancelCrop()
                             } }
                         >取消</Button>
                     </> }
@@ -144,7 +144,7 @@ const ControlPanel: FC<ControlPanelProps> = ({ overlay, beforeDeleteCrop }) => {
                         value={ innerData.cropList }
                         onDelete={ async (index) => {
                             if (await beforeDelete(innerData.cropList[index], index)) {
-                                overlay.crop.deleteCropStore(index)
+                                overlay.crop?.deleteCropStore(index)
                             }
                         } }
                     /> }

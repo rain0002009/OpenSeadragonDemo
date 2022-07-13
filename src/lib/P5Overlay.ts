@@ -9,24 +9,29 @@ import { Draw } from './draw/Draw'
 export default class P5Overlay {
     public viewer: OpenSeaDragon.Viewer
     private readonly wrapDiv: HTMLDivElement
-    public sk!: P5
-    public crop!: Crop
+    public sk?: P5
+    public crop?: Crop
     public overlayEvent: EventEmitter
-    public drawMarker!: DrawMark
+    public drawMarker?: DrawMark
+    private onReadyCallback: (() => void)[]
 
     constructor (viewer: OpenSeaDragon.Viewer) {
+        this.onReadyCallback = []
         this.overlayEvent = new EventEmitter()
         this.viewer = viewer
         this.wrapDiv = document.createElement('div')
         this.wrapDiv.classList.add('p5-wrap')
         this.viewer.canvas.append(this.wrapDiv)
-        this.sk = new P5((sk) => {
+        new P5((sk) => {
             this.sk = sk
             this.drawMarker = new DrawMark(this)
             sk.setup = () => {
                 const viewerSize = this.viewer.viewport.getContainerSize()
                 sk.createCanvas(viewerSize.x, viewerSize.y)
                 sk.noLoop()
+                this.onReadyCallback.forEach((fn) => {
+                    fn?.()
+                })
             }
             sk.draw = () => {
                 const viewportZoom = this.viewer.viewport.getZoom(true)
@@ -37,15 +42,15 @@ export default class P5Overlay {
                         const zoom = image.viewportToImageZoom(viewportZoom)
                         const vp = image.imageToViewportCoordinates(0, 0, true)
                         const p = this.viewer.viewport.pixelFromPoint(vp, true)
-                        if (!this.crop.cropInfo.enable) {
+                        if (!this.crop?.cropInfo.enable) {
                             sk.push()
                             sk.translate(p.x, p.y)
                             sk.scale(zoom, zoom)
-                            this.drawMarker.drawMarkStore(viewportZoom)
-                            this.drawMarker.draw(sk, Draw.drawData, 1, viewportZoom, image)
+                            this.drawMarker?.drawMarkStore(viewportZoom)
+                            this.drawMarker?.draw(sk, Draw.drawData, 1, viewportZoom, image)
                             sk.pop()
                         }
-                        this.crop.doCrop()
+                        this.crop?.doCrop()
                     }
                 }
             }
@@ -64,5 +69,16 @@ export default class P5Overlay {
 
     public redraw () {
         this.sk?.redraw()
+    }
+
+    public onReady (fn: () => void) {
+        this.onReadyCallback.push(fn)
+    }
+    destroy () {
+        this.sk?.remove()
+        this.sk = void 0
+        this.crop = void 0
+        this.drawMarker = void 0
+        this.onReadyCallback = []
     }
 }

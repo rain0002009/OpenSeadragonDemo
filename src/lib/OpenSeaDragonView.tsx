@@ -44,9 +44,11 @@ const OpenSeaDragonView: FC<Props> = ({
                 innerData.controlPanelVisible = !event.fullScreen
             })
             const overlay = new P5Overlay(viewer)
-            setOverlay(overlay)
             initControlPanel(viewer)
-            onReady?.({ viewer, overlay })
+            overlay.onReady(() => {
+                setOverlay(overlay)
+                onReady?.({ viewer, overlay })
+            })
         }
         return () => {
             viewer.destroy()

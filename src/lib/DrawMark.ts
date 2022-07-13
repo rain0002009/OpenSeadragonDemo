@@ -4,7 +4,7 @@ import { noop } from 'lodash-es'
 import { DrawMethod } from './draw'
 import { Draw, DrawData } from './draw/Draw'
 
-type SK = P5Overlay['sk']
+type SK = Required<P5Overlay>['sk']
 
 export class DrawMark {
     private overlay: P5Overlay
@@ -13,8 +13,8 @@ export class DrawMark {
 
     constructor (overlay: P5Overlay) {
         this.overlay = overlay
-        this.sk = overlay.sk
-        this.drawMethods = new DrawMethod(overlay.sk)
+        this.sk = overlay.sk!
+        this.drawMethods = new DrawMethod(overlay.sk!)
     }
 
     /**
@@ -22,7 +22,7 @@ export class DrawMark {
      * @param openTextModal
      */
     public startDraw (openTextModal?: () => void) {
-        this.overlay.crop.cancelCrop()
+        this.overlay.crop!.cancelCrop()
         Draw.drawData.enable = true
         this.overlay.viewer.setMouseNavEnabled(false)
         Draw.drawData.startPoint = null

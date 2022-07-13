@@ -12,7 +12,7 @@ const BUTTON_WRAPPER_HEIGHT = 34
 
 export class Crop {
     private viewer: Viewer
-    private sk: P5Overlay['sk']
+    private sk: Required<P5Overlay>['sk']
     /**
      * 存储截图文件对象
      */
@@ -36,7 +36,7 @@ export class Crop {
     constructor (overlay: P5Overlay) {
         this.store = []
         this.viewer = overlay.viewer
-        this.sk = overlay.sk
+        this.sk = overlay.sk!
         this.eventSource = overlay.overlayEvent
         this.buttonWrapperDiv = this.sk.createDiv()
         this.buttonWrapperDiv.hide()
