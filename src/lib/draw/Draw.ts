@@ -1,5 +1,17 @@
-import P5 from 'p5'
+import P5, { Color } from 'p5'
 import { Point } from 'openseadragon'
+import type { CanvasInfo } from '../DrawMark'
+
+export enum DRAW_MODE {
+    /**
+     * 用户操作
+     */
+    USER = 1,
+    /**
+     * 系统操作
+     */
+    SYSTEM
+}
 
 export interface DrawData {
     startPoint?: Point | null
@@ -11,6 +23,7 @@ export interface DrawData {
     path?: [number, number][]
     type?: string
     enable?: boolean
+    zoom?: number
 }
 
 export class Draw {
@@ -25,13 +38,23 @@ export class Draw {
      */
     static mode: 1 | 2
     public drawName: string = ''
-    public needStroke = true
 
     constructor (sk: P5) {
         Draw.sk = sk
     }
 
+    static noFill (currentDrawData: DrawData) {
+        Draw.sk.noFill()
+        Draw.sk.strokeWeight(currentDrawData.strokeWeight! * 2)
+        Draw.sk.stroke(currentDrawData.color as Color)
+    }
+
     draw (currentDrawData: DrawData) {}
+
+    /**
+     * 选中绘画模式后的回调
+     */
+    active () {}
 
     /**
      * 绘画开始时的回调
@@ -43,10 +66,11 @@ export class Draw {
      * 绘图结束时的回调
      * @private
      */
-    end () {
+    end (canvasInfo: CanvasInfo) {
         Draw.store.push({
             ...Draw.drawData,
-            path: [[Draw.drawData.startPointTransformed!.x, Draw.drawData!.startPointTransformed!.y], [Draw.drawData!.endPoint!.x, Draw.drawData!.endPoint!.y]]
+            path: [[Draw.drawData.startPointTransformed!.x, Draw.drawData!.startPointTransformed!.y], [Draw.drawData!.endPoint!.x, Draw.drawData!.endPoint!.y]],
+            zoom: canvasInfo.zoom
         })
     }
 }

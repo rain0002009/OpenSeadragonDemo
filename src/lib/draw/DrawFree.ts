@@ -11,7 +11,7 @@ declare module './Draw' {
 export class DrawFree extends Draw {
     drawName = 'free'
 
-    start () {
+    active () {
         Draw.drawData.freePath = []
     }
 
@@ -20,6 +20,7 @@ export class DrawFree extends Draw {
     }
 
     draw (currentDrawData: DrawData) {
+        Draw.noFill(currentDrawData)
         if (Draw.mode == 1) {
             if (currentDrawData.freePath?.length === 0) {
                 currentDrawData.freePath.push([currentDrawData.startPoint?.x || 0, currentDrawData.startPoint?.y || 0])

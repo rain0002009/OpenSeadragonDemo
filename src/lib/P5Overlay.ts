@@ -4,7 +4,7 @@ import './index.less'
 import { EventEmitter } from 'events'
 import { Crop } from './Crop'
 import { DrawMark } from './DrawMark'
-import { Draw } from './draw/Draw'
+import { Draw, DRAW_MODE } from './draw/Draw'
 
 export default class P5Overlay {
     public viewer: OpenSeaDragon.Viewer
@@ -42,12 +42,13 @@ export default class P5Overlay {
                         const zoom = image.viewportToImageZoom(viewportZoom)
                         const vp = image.imageToViewportCoordinates(0, 0, true)
                         const p = this.viewer.viewport.pixelFromPoint(vp, true)
+                        this.drawMarker?.setCanvasInfo({ zoom, image })
                         if (!this.crop?.cropInfo.enable) {
                             sk.push()
                             sk.translate(p.x, p.y)
                             sk.scale(zoom, zoom)
-                            this.drawMarker?.drawMarkStore(viewportZoom)
-                            this.drawMarker?.draw(sk, Draw.drawData, 1, viewportZoom, image)
+                            this.drawMarker?.drawMarkStore(zoom)
+                            this.drawMarker?.draw(sk, Draw.drawData, DRAW_MODE.USER)
                             sk.pop()
                         }
                         this.crop?.doCrop()
@@ -74,6 +75,7 @@ export default class P5Overlay {
     public onReady (fn: () => void) {
         this.onReadyCallback.push(fn)
     }
+
     destroy () {
         this.sk?.remove()
         this.sk = void 0
